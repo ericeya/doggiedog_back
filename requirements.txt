@@ -11,5 +11,6 @@ sqlparse==0.5.1
 tzdata==2024.1
 virtualenv==20.26.3
 PyJWT==2.8.0
+django-dotenv==1.4.2
 
 # run . venv/scripts/activate to activate virtual environment

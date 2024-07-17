@@ -5,6 +5,8 @@ from rest_framework.exceptions import AuthenticationFailed
 from .models import User, Image
 from .serializers import UserSerializer, ImageSerializer
 import jwt, datetime
+from django.utils import timezone
+import os
 
 # class UserList(generics.ListCreateAPIView):
 #     queryset = User.objects.all()
@@ -41,13 +43,17 @@ class LoginView(APIView):
             'iat': datetime.datetime.now()
         }
 
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
+        user.last_login = timezone.now()
+        user.save()
+
+        token = jwt.encode(payload, os.environ.get('JWT_SECRET'), algorithm='HS256')
 
         response = Response()
 
         response.set_cookie(key='jwt', value=token, httponly=True)
 
         response.data = {
+            'id': user.id,
             'jwt': token
         }
 
@@ -55,13 +61,18 @@ class LoginView(APIView):
     
 class UserView(APIView):
     def get(self, request):
+        print(request)
         token = request.COOKIES.get('jwt')
-        # print(token)
-        if not token:
+        token2 = request.headers.get('Cookie')
+        token3 = token2.replace("jwt=", "").split(' ')
+        print(token)
+        print(token3[1])
+
+        if not token3:
             raise AuthenticationFailed('Unauthenticated1')
         
         try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            payload = jwt.decode(token, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
             print(payload)
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated2')
