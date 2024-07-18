@@ -22,3 +22,6 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = ('__all__')
         
+    def create(self, validated_data):
+        image = Image.objects.create(**validated_data)
+        return image

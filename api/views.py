@@ -2,6 +2,7 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework import status
 from .models import User, Image
 from .serializers import UserSerializer, ImageSerializer
 import jwt, datetime
@@ -19,10 +20,45 @@ import os
 
 class RegisterView(APIView):
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        print(request.data)
+        
+        if request.data is not None:
+            email = request.data['email']
+            findEmail = User.objects.filter(email=email).first()
+            if findEmail is None:
+                serializer = UserSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            else:
+                raise AuthenticationFailed("Email already exists!")
+        else: 
+            raise AuthenticationFailed("Invalid entry. Please try again")
+        
+        user = User.objects.filter(email=email).first()
+
+        print(user.id)
+        payload = {
+            'id': user.id,
+            'exp': datetime.datetime.now() + datetime.timedelta(days=1),
+            'iat': datetime.datetime.now()
+        }
+        # user.data.last_login = timezone.now()
+        
+
+        token = jwt.encode(payload, os.environ.get('JWT_SECRET'), algorithm='HS256')
+
+        response = Response()
+
+        response.set_cookie(key='jwt', value=token, httponly=True)
+
+        response.data = {
+            'id': user.id,
+            'jwt': token
+        }
+
+        print(response.data)
+
+        return response
     
 class LoginView(APIView):
     def post(self, request):
@@ -63,16 +99,16 @@ class UserView(APIView):
     def get(self, request):
         print(request)
         token = request.COOKIES.get('jwt')
-        token2 = request.headers.get('Cookie')
-        token3 = token2.replace("jwt=", "").split(' ')
-        print(token)
-        print(token3[1])
+        token2 = request.headers.get('Authorization')
+        # token3 = token2.replace("jwt=", "").split(' ')
+        print(token2)
+        # print(token3[1])
 
-        if not token3:
+        if not token2:
             raise AuthenticationFailed('Unauthenticated1')
         
         try:
-            payload = jwt.decode(token, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
+            payload = jwt.decode(token2, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
             print(payload)
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated2')
@@ -91,3 +127,24 @@ class LogoutView(APIView):
         }
 
         return response
+    
+class AllUserView(APIView):
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        print(serializer.data)
+        return Response(serializer.data)
+    
+class ImageListView(APIView):
+    def get(self, request):
+        images = Image.objects.all()
+        serializer = ImageSerializer(images, many=True)
+        return Response(serializer.data)
+    
+class UploadImageView(APIView):
+    def post(self, request):
+        serializer = ImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
