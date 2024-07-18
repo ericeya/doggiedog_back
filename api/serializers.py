@@ -18,10 +18,13 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 class ImageSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Image
-        fields = ('__all__')
-        
+        fields = ['id', 'image', 'uploaded_date', 'caption', 'user', 'username', 'email']
+
     def create(self, validated_data):
         image = Image.objects.create(**validated_data)
         return image

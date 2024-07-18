@@ -137,7 +137,7 @@ class AllUserView(APIView):
     
 class ImageListView(APIView):
     def get(self, request):
-        images = Image.objects.all()
+        images = Image.objects.all().select_related('user')
         serializer = ImageSerializer(images, many=True)
         return Response(serializer.data)
     
