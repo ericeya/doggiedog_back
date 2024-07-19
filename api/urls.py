@@ -10,6 +10,7 @@ urlpatterns = [
     path('userlist', AllUserView.as_view(), name="all-user-list"),
     path('imagelist', ImageListView.as_view(), name="image-list"),
     path('upload', UploadImageView.as_view(), name="upload-image"),
+    # path('userimages', UserImageListView.as_view(), name="load-user-images"),
     # path('image/', ImageList.as_view()),
     # path('image/<int:pk>/', ImageDetail.as_view()),
 ]

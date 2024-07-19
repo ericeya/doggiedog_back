@@ -2,6 +2,8 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from .models import User, Image
 from .serializers import UserSerializer, ImageSerializer
@@ -97,12 +99,7 @@ class LoginView(APIView):
     
 class UserView(APIView):
     def get(self, request):
-        print(request)
-        token = request.COOKIES.get('jwt')
         token2 = request.headers.get('Authorization')
-        # token3 = token2.replace("jwt=", "").split(' ')
-        print(token2)
-        # print(token3[1])
 
         if not token2:
             raise AuthenticationFailed('Unauthenticated1')
@@ -142,9 +139,25 @@ class ImageListView(APIView):
         return Response(serializer.data)
     
 class UploadImageView(APIView):
-    def post(self, request):
+
+    def post(self, request, *args, **kwargs):
+        token = request.headers.get('Authorization')
+
+        if not token:
+            raise AuthenticationFailed('Unauthenticated1')
+        
+        try:
+            payload = jwt.decode(token, os.environ.get('JWT_SECRET'), algorithms=['HS256'])
+            print(payload)
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated2')
+        print(request.headers)
+        print(request.user)
+        print(request.data)
+
         serializer = ImageSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer.save(user_id=payload['id'])
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    

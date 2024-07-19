@@ -26,6 +26,7 @@ class Image(models.Model):
     uploaded_date = models.DateTimeField(auto_now_add=True, null=True)
     caption = models.TextField(max_length=1000, default=None)
     user = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
+    # like = models.IntegerField()
 
     def __str__(self): 
         return f"Image uploaded by {self.user.username} on {self.uploaded_date} with caption: {self.caption}"
