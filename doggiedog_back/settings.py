@@ -45,8 +45,16 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://doggiedog.s3-website.us-east-2.amazonaws.com",
+    "https://doggiedog.s3-website.us-east-2.amazonaws.com",
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://3.23.115.224",
+    "https://3.23.115.224",
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
